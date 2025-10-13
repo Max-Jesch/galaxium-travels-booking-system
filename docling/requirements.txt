@@ -1,0 +1,7 @@
+docling>=2.55.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+
+
+
