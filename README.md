@@ -63,6 +63,16 @@ galaxium-travels-infrastructure/
   - Markdown-based data storage
   - Enhanced error handling for AI agents
 
+### 4. Booking Web Application
+- **Repository:** [galaxium-booking-web-app](https://github.com/Max-Jesch/galaxium-booking-web-app)
+- **Description:** Web interface for the Galaxium Travels booking system. Provides a user-friendly frontend for booking flights and managing reservations.
+- **Features:**
+  - Interactive flight booking interface
+  - User registration and management
+  - Real-time booking status
+  - Containerized with Docker for easy deployment
+- **Note:** This application has been moved to its own repository for independent versioning and deployment.
+
 ## Documentation
 
 - **[Error Handling Guide](docs/error-handling-guide.md)**: Comprehensive overview of error message improvements
@@ -88,4 +98,4 @@ Feel free to fork, open issues, or submit pull requests for improvements or new 
 
 ---
 
-**This repository is for demonstration and prototyping purposes only.** 
+**This repository is for demonstration and prototyping purposes only.**
