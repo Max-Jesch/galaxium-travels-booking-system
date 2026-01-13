@@ -105,6 +105,9 @@ cython_debug/
 # VS Code
 .vscode/
 
+# Bob AI Assistant
+.bob/
+
 # JetBrains IDEs
 .idea/
 *.iml
