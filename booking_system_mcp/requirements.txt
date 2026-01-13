@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-sqlalchemy
-databases
-pydantic
-python-dotenv
-fastmcp 
