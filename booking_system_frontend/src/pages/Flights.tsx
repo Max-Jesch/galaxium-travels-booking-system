@@ -41,15 +41,29 @@ export const Flights = () => {
     setFilteredFlights(filtered);
   }, [searchTerm, flights]);
 
-  const loadFlights = async () => {
+  const loadFlights = async (retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // 1 second
+
     setIsLoading(true);
     try {
       const data = await getFlights();
       setFlights(data);
       setFilteredFlights(data);
     } catch (error: any) {
-      toast.error('Failed to load flights');
-      console.error(error);
+      if (retryCount < MAX_RETRIES) {
+        toast.error(`Failed to load flights. Retrying... (${retryCount + 1}/${MAX_RETRIES})`);
+        console.warn(`Retry attempt ${retryCount + 1} after error:`, error);
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+        
+        // Retry with incremented count
+        return loadFlights(retryCount + 1);
+      } else {
+        toast.error('Failed to load flights after multiple attempts');
+        console.error('Max retries reached:', error);
+      }
     } finally {
       setIsLoading(false);
     }
