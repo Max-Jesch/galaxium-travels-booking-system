@@ -28,14 +28,15 @@ def list_flights() -> list[FlightOut]:
 
 
 @mcp.tool()
-def book_flight(user_id: int, name: str, flight_id: int) -> BookingOut:
-    """Book a seat on a specific flight for a user.
+def book_flight(user_id: int, name: str, flight_id: int, seat_class: str = "economy") -> BookingOut:
+    """Book a seat on a specific flight for a user in the specified seat class.
     Requires user_id, name, and flight_id.
-    Decrements available seats if successful.
+    Optional seat_class: 'economy' (default), 'business', or 'galaxium'.
+    Decrements available seats for the selected class if successful.
     Returns booking details or raises an error if booking is not possible."""
     db = SessionLocal()
     try:
-        result = booking.book_flight(db, user_id, name, flight_id)
+        result = booking.book_flight(db, user_id, name, flight_id, seat_class)
         if isinstance(result, ErrorResponse):
             raise Exception(result.details or result.error)
         return result
@@ -144,11 +145,13 @@ def get_flights(db: Session = Depends(get_db)):
 
 @app.post("/book", response_model=Union[BookingOut, ErrorResponse], tags=["Bookings"])
 def book_flight_endpoint(request: BookingRequest, db: Session = Depends(get_db)):
-    """Book a seat on a specific flight for a user.
+    """Book a seat on a specific flight for a user in the specified seat class.
 
-    Requires user_id, name, and flight_id. Decrements available seats if successful.
+    Requires user_id, name, and flight_id.
+    Optional seat_class: 'economy' (default), 'business', or 'galaxium'.
+    Decrements available seats for the selected class if successful.
     """
-    return booking.book_flight(db, request.user_id, request.name, request.flight_id)
+    return booking.book_flight(db, request.user_id, request.name, request.flight_id, request.seat_class)
 
 
 @app.get("/bookings/{user_id}", response_model=list[BookingOut], tags=["Bookings"])

@@ -1,6 +1,6 @@
-import type { Flight } from '../../types';
+import type { Flight, SeatClass } from '../../types';
 import { Card, Button } from '../common';
-import { Plane, Clock, DollarSign, Users } from 'lucide-react';
+import { Plane, Clock, Users, Sparkles, Crown, Rocket } from 'lucide-react';
 import { formatCurrency, formatDate, formatTime, calculateDuration } from '../../utils/formatters';
 import { motion } from 'framer-motion';
 
@@ -10,8 +10,41 @@ interface FlightCardProps {
 }
 
 export const FlightCard = ({ flight, onBook }: FlightCardProps) => {
-  const isLowSeats = flight.seats_available <= 2;
-  const isSoldOut = flight.seats_available === 0;
+  const totalSeats = flight.economy_seats_available + flight.business_seats_available + flight.galaxium_seats_available;
+  const isSoldOut = totalSeats === 0;
+
+  const seatClasses = [
+    {
+      name: 'Economy',
+      class: 'economy' as SeatClass,
+      price: flight.economy_price,
+      seats: flight.economy_seats_available,
+      icon: Plane,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/30',
+    },
+    {
+      name: 'Business',
+      class: 'business' as SeatClass,
+      price: flight.business_price,
+      seats: flight.business_seats_available,
+      icon: Crown,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/30',
+    },
+    {
+      name: 'Galaxium Class',
+      class: 'galaxium' as SeatClass,
+      price: flight.galaxium_price,
+      seats: flight.galaxium_seats_available,
+      icon: Rocket,
+      color: 'text-alien-green',
+      bgColor: 'bg-alien-green/10',
+      borderColor: 'border-alien-green/30',
+    },
+  ];
 
   return (
     <motion.div
@@ -39,7 +72,7 @@ export const FlightCard = ({ flight, onBook }: FlightCardProps) => {
         </div>
 
         {/* Flight Details */}
-        <div className="space-y-3 mb-6 flex-1">
+        <div className="space-y-4 mb-6 flex-1">
           {/* Departure & Arrival */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -70,21 +103,41 @@ export const FlightCard = ({ flight, onBook }: FlightCardProps) => {
             </span>
           </div>
 
-          {/* Price */}
-          <div className="flex items-center gap-2">
-            <DollarSign size={16} className="text-alien-green" />
-            <span className="text-2xl font-bold text-star-white">
-              {formatCurrency(flight.price)}
-            </span>
-            <span className="text-sm text-star-white/60">per seat</span>
-          </div>
-
-          {/* Seats Available */}
-          <div className="flex items-center gap-2">
-            <Users size={16} className={isLowSeats ? 'text-solar-orange' : 'text-star-white/70'} />
-            <span className={`text-sm ${isLowSeats ? 'text-solar-orange font-semibold' : 'text-star-white/70'}`}>
-              {isSoldOut ? 'Sold Out' : `${flight.seats_available} seats available`}
-            </span>
+          {/* Seat Classes */}
+          <div className="space-y-2">
+            <p className="text-xs text-star-white/60 mb-2">Available Seat Classes</p>
+            {seatClasses.map((seatClass) => {
+              const Icon = seatClass.icon;
+              const isClassSoldOut = seatClass.seats === 0;
+              const isLowSeats = seatClass.seats <= 2 && seatClass.seats > 0;
+              
+              return (
+                <div
+                  key={seatClass.class}
+                  className={`p-3 rounded-lg border ${seatClass.borderColor} ${seatClass.bgColor} ${
+                    isClassSoldOut ? 'opacity-50' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Icon size={18} className={seatClass.color} />
+                      <span className="font-medium text-star-white">{seatClass.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-lg font-bold ${seatClass.color}`}>
+                        {formatCurrency(seatClass.price)}
+                      </div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <Users size={12} className={isLowSeats ? 'text-solar-orange' : 'text-star-white/60'} />
+                        <span className={isLowSeats ? 'text-solar-orange font-semibold' : 'text-star-white/60'}>
+                          {isClassSoldOut ? 'Sold Out' : `${seatClass.seats} left`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -94,7 +147,7 @@ export const FlightCard = ({ flight, onBook }: FlightCardProps) => {
           disabled={isSoldOut}
           className="w-full"
         >
-          {isSoldOut ? 'Sold Out' : 'Book Now'}
+          {isSoldOut ? 'All Classes Sold Out' : 'Select Seat Class'}
         </Button>
       </Card>
     </motion.div>

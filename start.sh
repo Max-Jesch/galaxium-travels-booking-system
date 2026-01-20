@@ -28,6 +28,7 @@ cleanup() {
     echo ""
     echo "🛑 Shutting down servers..."
     kill $BACKEND_PID $FRONTEND_PID 2>/dev/null
+    rm -f booking_system_backend/backend.log
     exit 0
 }
 
@@ -47,16 +48,22 @@ fi
 source .venv/bin/activate
 pip install -q -r requirements.txt
 
-# Start backend server in background
-python server.py &
+# Start backend server in background using venv Python
+.venv/bin/python server.py > backend.log 2>&1 &
 BACKEND_PID=$!
-cd ..
 
+# Wait for backend to start and verify
+sleep 3
+if ! curl -s http://localhost:8080/ > /dev/null 2>&1; then
+    echo "❌ Backend failed to start. Check backend.log for errors:"
+    cat backend.log
+    kill $BACKEND_PID 2>/dev/null
+    exit 1
+fi
+
+cd ..
 echo -e "${GREEN}✅ Backend started on http://localhost:8080${NC}"
 echo ""
-
-# Wait a moment for backend to start
-sleep 2
 
 # Start Frontend
 echo -e "${BLUE}🎨 Starting Frontend Server...${NC}"

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { Flight } from '../../types';
+import type { Flight, SeatClass } from '../../types';
 import { Modal, Button } from '../common';
-import { Plane, Calendar, Clock, DollarSign } from 'lucide-react';
+import { Plane, Calendar, Clock, DollarSign, Crown, Rocket, Check } from 'lucide-react';
 import { formatCurrency, formatDate, calculateDuration } from '../../utils/formatters';
 import { bookFlight, isErrorResponse } from '../../services/api';
 import { useUser } from '../../hooks/useUser';
@@ -17,8 +17,47 @@ interface BookingModalProps {
 export const BookingModal = ({ isOpen, onClose, flight, onSuccess }: BookingModalProps) => {
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<SeatClass>('economy');
 
   if (!flight) return null;
+
+  const seatClasses = [
+    {
+      name: 'Economy',
+      class: 'economy' as SeatClass,
+      price: flight.economy_price,
+      seats: flight.economy_seats_available,
+      icon: Plane,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/30',
+      features: ['Standard seating', 'In-flight entertainment', 'Complimentary snacks'],
+    },
+    {
+      name: 'Business',
+      class: 'business' as SeatClass,
+      price: flight.business_price,
+      seats: flight.business_seats_available,
+      icon: Crown,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/30',
+      features: ['Premium seating', 'Priority boarding', 'Gourmet meals', 'Extra legroom'],
+    },
+    {
+      name: 'Galaxium Class',
+      class: 'galaxium' as SeatClass,
+      price: flight.galaxium_price,
+      seats: flight.galaxium_seats_available,
+      icon: Rocket,
+      color: 'text-alien-green',
+      bgColor: 'bg-alien-green/10',
+      borderColor: 'border-alien-green/30',
+      features: ['Luxury pods', 'VIP lounge access', 'Personal concierge', 'Zero-G experience'],
+    },
+  ];
+
+  const selectedClassData = seatClasses.find(sc => sc.class === selectedClass);
 
   const handleConfirmBooking = async () => {
     if (!user) {
@@ -33,6 +72,7 @@ export const BookingModal = ({ isOpen, onClose, flight, onSuccess }: BookingModa
         user_id: user.user_id,
         name: user.name,
         flight_id: flight.flight_id,
+        seat_class: selectedClass,
       });
 
       if (isErrorResponse(result)) {
@@ -40,7 +80,7 @@ export const BookingModal = ({ isOpen, onClose, flight, onSuccess }: BookingModa
         return;
       }
 
-      toast.success('Flight booked successfully!');
+      toast.success(`Flight booked successfully in ${selectedClassData?.name}!`);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -74,39 +114,71 @@ export const BookingModal = ({ isOpen, onClose, flight, onSuccess }: BookingModa
             </div>
           </div>
 
+          <div className="grid grid-cols-3 gap-3 text-sm">
+            <div>
+              <p className="text-xs text-star-white/60 mb-1">Departure</p>
+              <p className="text-star-white font-medium">
+                {formatDate(flight.departure_time, 'MMM dd')}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-star-white/60 mb-1">Arrival</p>
+              <p className="text-star-white font-medium">
+                {formatDate(flight.arrival_time, 'MMM dd')}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-star-white/60 mb-1">Duration</p>
+              <p className="text-star-white font-medium">
+                {calculateDuration(flight.departure_time, flight.arrival_time)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Seat Class Selection */}
+        <div>
+          <h4 className="text-sm font-semibold text-star-white mb-3">Select Seat Class</h4>
           <div className="space-y-3">
-            {/* Departure */}
-            <div className="flex items-start gap-3">
-              <Calendar className="text-cosmic-purple mt-1" size={20} />
-              <div>
-                <p className="text-xs text-star-white/60">Departure</p>
-                <p className="text-star-white font-medium">
-                  {formatDate(flight.departure_time)}
-                </p>
-              </div>
-            </div>
-
-            {/* Arrival */}
-            <div className="flex items-start gap-3">
-              <Calendar className="text-cosmic-purple mt-1" size={20} />
-              <div>
-                <p className="text-xs text-star-white/60">Arrival</p>
-                <p className="text-star-white font-medium">
-                  {formatDate(flight.arrival_time)}
-                </p>
-              </div>
-            </div>
-
-            {/* Duration */}
-            <div className="flex items-start gap-3">
-              <Clock className="text-cosmic-purple mt-1" size={20} />
-              <div>
-                <p className="text-xs text-star-white/60">Duration</p>
-                <p className="text-star-white font-medium">
-                  {calculateDuration(flight.departure_time, flight.arrival_time)}
-                </p>
-              </div>
-            </div>
+            {seatClasses.map((seatClass) => {
+              const Icon = seatClass.icon;
+              const isSelected = selectedClass === seatClass.class;
+              const isSoldOut = seatClass.seats === 0;
+              
+              return (
+                <button
+                  key={seatClass.class}
+                  onClick={() => !isSoldOut && setSelectedClass(seatClass.class)}
+                  disabled={isSoldOut}
+                  className={`w-full p-4 rounded-lg border-2 transition-all ${
+                    isSelected
+                      ? `${seatClass.borderColor} ${seatClass.bgColor}`
+                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                  } ${isSoldOut ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Icon size={20} className={seatClass.color} />
+                      <span className="font-semibold text-star-white">{seatClass.name}</span>
+                      {isSelected && <Check size={18} className={seatClass.color} />}
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-lg font-bold ${seatClass.color}`}>
+                        {formatCurrency(seatClass.price)}
+                      </div>
+                      <div className="text-xs text-star-white/60">
+                        {isSoldOut ? 'Sold Out' : `${seatClass.seats} left`}
+                      </div>
+                    </div>
+                  </div>
+                  <ul className="text-left text-xs text-star-white/70 space-y-1">
+                    {seatClass.features.map((feature, idx) => (
+                      <li key={idx}>• {feature}</li>
+                    ))}
+                  </ul>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -128,7 +200,7 @@ export const BookingModal = ({ isOpen, onClose, flight, onSuccess }: BookingModa
             <span className="text-white font-semibold">Total Price</span>
           </div>
           <span className="text-2xl font-bold text-white">
-            {formatCurrency(flight.price)}
+            {formatCurrency(selectedClassData?.price || flight.economy_price)}
           </span>
         </div>
 

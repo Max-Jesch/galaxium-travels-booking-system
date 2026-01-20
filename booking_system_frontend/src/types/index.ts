@@ -1,13 +1,20 @@
 // API Data Models matching backend schemas
 
+export type SeatClass = 'economy' | 'business' | 'galaxium';
+
 export interface Flight {
   flight_id: number;
   origin: string;
   destination: string;
   departure_time: string;
   arrival_time: string;
-  price: number;
-  seats_available: number;
+  base_price: number;
+  economy_seats_available: number;
+  business_seats_available: number;
+  galaxium_seats_available: number;
+  economy_price: number;
+  business_price: number;
+  galaxium_price: number;
 }
 
 export interface Booking {
@@ -16,6 +23,8 @@ export interface Booking {
   flight_id: number;
   status: 'booked' | 'cancelled' | 'completed';
   booking_time: string;
+  seat_class: SeatClass;
+  price_paid: number;
 }
 
 export interface User {
@@ -29,6 +38,7 @@ export interface BookingRequest {
   user_id: number;
   name: string;
   flight_id: number;
+  seat_class?: SeatClass;
 }
 
 export interface UserRegistration {

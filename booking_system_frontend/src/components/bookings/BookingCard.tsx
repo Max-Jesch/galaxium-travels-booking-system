@@ -1,6 +1,6 @@
 import type { Booking, Flight } from '../../types';
 import { Card, Button } from '../common';
-import { Plane, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plane, Calendar, CheckCircle, XCircle, Clock, Crown, Rocket } from 'lucide-react';
 import { formatDate, formatCurrency } from '../../utils/formatters';
 import { motion } from 'framer-motion';
 
@@ -12,6 +12,38 @@ interface BookingCardProps {
 }
 
 export const BookingCard = ({ booking, flight, onCancel, isCancelling }: BookingCardProps) => {
+  const getSeatClassIcon = () => {
+    switch (booking.seat_class) {
+      case 'business':
+        return <Crown className="text-purple-400" size={16} />;
+      case 'galaxium':
+        return <Rocket className="text-alien-green" size={16} />;
+      default:
+        return <Plane className="text-blue-400" size={16} />;
+    }
+  };
+
+  const getSeatClassName = () => {
+    switch (booking.seat_class) {
+      case 'business':
+        return 'Business';
+      case 'galaxium':
+        return 'Galaxium Class';
+      default:
+        return 'Economy';
+    }
+  };
+
+  const getSeatClassColor = () => {
+    switch (booking.seat_class) {
+      case 'business':
+        return 'text-purple-400';
+      case 'galaxium':
+        return 'text-alien-green';
+      default:
+        return 'text-blue-400';
+    }
+  };
   const getStatusIcon = () => {
     switch (booking.status) {
       case 'booked':
@@ -91,11 +123,22 @@ export const BookingCard = ({ booking, flight, onCancel, isCancelling }: Booking
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-white/10">
-              <span className="text-sm text-star-white/60">Price</span>
-              <span className="text-lg font-bold text-star-white">
-                {formatCurrency(flight.price)}
-              </span>
+            <div className="space-y-2 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-star-white/60">Seat Class</span>
+                <div className="flex items-center gap-2">
+                  {getSeatClassIcon()}
+                  <span className={`text-sm font-semibold ${getSeatClassColor()}`}>
+                    {getSeatClassName()}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-star-white/60">Price Paid</span>
+                <span className="text-lg font-bold text-star-white">
+                  {formatCurrency(booking.price_paid)}
+                </span>
+              </div>
             </div>
           </div>
         ) : (

@@ -2,37 +2,72 @@
 
 This file provides guidance to agents when working with code in this repository.
 
-## Critical Architecture Patterns
+## Critical Non-Obvious Patterns
 
-**Dual Protocol Server**: Backend exposes BOTH REST and MCP from single FastAPI app. MCP server MUST be created before FastAPI app (line 16 in server.py) to properly combine lifespans. MCP mounted at `/mcp` endpoint (line 183).
+### Backend Architecture
+- **MCP server MUST be created before FastAPI app** (server.py:14-16) - lifespan combination requires this order
+- **Service layer returns Union types** - All service functions return `ModelOut | ErrorResponse`, not exceptions
+- **Seat class validation happens in service layer** - booking.py validates against SEAT_CLASS_MULTIPLIERS dict, not Pydantic
+- **Database sessions must be manually closed** - MCP tools use SessionLocal() directly and require try/finally blocks
+- **Price calculation uses multipliers** - booking.py:8-12 defines SEAT_CLASS_MULTIPLIERS (economy: 1.0, business: 2.5, galaxium: 5.0)
 
-**MCP Tool Pattern**: MCP tools manually manage SessionLocal() - they create, use, and close sessions in try/finally blocks. This differs from REST endpoints which use FastAPI's Depends(get_db) dependency injection.
+### Testing
+- **Tests run from backend directory** - `cd booking_system_backend && pytest`, not from project root
+- **pytest.ini configures verbose output** - `-v --tb=short` is default, tests always show detailed output
 
-**Service Layer Returns Union Types**: All service functions return `Result | ErrorResponse` (not exceptions). Check response type with `isinstance(result, ErrorResponse)` before using. MCP tools convert ErrorResponse to exceptions; REST endpoints return them directly.
+### Frontend API Integration
+- **API base URL from env variable** - api.ts:13 uses `import.meta.env.VITE_API_URL` with localhost:8080 fallback
+- **Error responses have specific structure** - Check `response.success === false` to detect errors (api.ts:112)
+- **All API endpoints are prefixed with /api/** - Except root health check at `/`
 
-**User Validation Requires Name Match**: `book_flight()` validates BOTH user_id AND name match (line 27 in services/booking.py). This is intentional - prevents booking with wrong user_id.
+### Monorepo Structure
+- **Backend and frontend are separate projects** - Each has own dependencies, must cd into directory before running commands
+- **Start script handles both servers** - start.sh creates venv, installs deps, starts both servers with proper cleanup
+- **Backend uses .venv in its directory** - Not at project root, start.sh uses `.venv/bin/python` explicitly
 
-## Testing
+## Commands
 
-**Test Database Isolation**: Tests use in-memory SQLite with StaticPool (conftest.py line 18-22). Each test gets fresh db via `db_session` fixture that creates/drops tables per test.
-
-**Monkeypatch Pattern**: Test client patches BOTH `db.SessionLocal` AND `server.SessionLocal` (conftest.py line 49-50) because MCP tools import SessionLocal directly, not via dependency injection.
-
-**Seed Disabled in Tests**: conftest.py line 53 patches `seed()` to no-op during tests to prevent test data pollution.
-
-## Frontend State Management
-
-**User Persistence**: useUser hook stores user in localStorage with key `'galaxium_user'` (line 7 in hooks/useUser.tsx). User state synced on every change via useEffect.
-
-**API Error Handling**: axios interceptor (api.ts line 20-35) transforms backend ErrorResponse into rejected promises. Check errors with `isErrorResponse()` helper.
-
-## Running Tests
-
+### Backend (from booking_system_backend/)
 ```bash
-cd booking_system_backend
-pytest                    # Run all tests
-pytest tests/test_services.py  # Service layer only
-pytest tests/test_rest.py      # REST endpoints only
+# Run server (creates DB, seeds data, starts on port 8080)
+python server.py
+
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/test_services.py
+pytest tests/test_rest.py
 ```
 
-Tests must be run from `booking_system_backend` directory due to sys.path manipulation in conftest.py.
+### Frontend (from booking_system_frontend/)
+```bash
+# Dev server (port 5173)
+npm run dev
+
+# Production build
+npm run build
+
+# Lint
+npm run lint
+```
+
+### Full Stack (from project root)
+```bash
+# Start both servers (recommended)
+./start.sh
+```
+
+## Code Style
+
+### Backend (Python)
+- Type hints required - All functions use return type annotations
+- Pydantic models use `from_attributes = True` for ORM compatibility
+- Service functions are pure - No FastAPI dependencies in services/
+- Error responses use structured ErrorResponse model with error_code field
+
+### Frontend (TypeScript)
+- Strict mode enabled - tsconfig.app.json has strict: true
+- No unused locals/parameters - Enforced by TypeScript config
+- React 19 with new JSX transform - Uses react-jsx, not React imports
+- API responses typed as Union types - `Model | ErrorResponse` pattern matches backend
