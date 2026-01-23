@@ -6,12 +6,15 @@ A modern, space-themed frontend for the Galaxium Travels interplanetary booking 
 
 - **Modern UI/UX**: Beautiful space-themed interface with animated starfield background
 - **Responsive Design**: Works seamlessly on mobile, tablet, and desktop
-- **Real-time Updates**: Live flight availability and booking status
-- **User Management**: Simple name/email authentication
-- **Flight Booking**: Browse, search, and book interplanetary flights
-- **Booking Management**: View and cancel your bookings
+- **Three Seat Classes**: Economy, Business, and Galaxium with real-time availability
+- **Dynamic Pricing Display**: Shows calculated prices per seat class
+- **Real-time Updates**: Live seat availability per class and booking status
+- **User Management**: Simple name/email authentication with React Context
+- **Flight Booking**: Browse, filter, and book interplanetary flights
+- **Booking Management**: View and cancel your bookings with instant updates
 - **Toast Notifications**: User-friendly feedback for all actions
 - **Smooth Animations**: Framer Motion powered transitions
+- **Type-Safe API**: Union types for error handling without try/catch
 
 ## 🛠️ Tech Stack
 
@@ -130,29 +133,64 @@ All components follow a consistent design pattern with:
 
 The frontend connects to the backend API with the following endpoints:
 
-- `GET /flights` - List all flights
-- `POST /register` - Register new user
-- `GET /user?name=...&email=...` - Get user by credentials
-- `POST /book` - Book a flight
-- `GET /bookings/{user_id}` - Get user's bookings
-- `POST /cancel/{booking_id}` - Cancel a booking
+- `GET /api/flights` - List all flights with seat class availability
+- `POST /api/register` - Register new user
+- `GET /api/user?name=...&email=...` - Get user by credentials
+- `POST /api/book` - Book a flight with seat class selection
+- `GET /api/bookings/{user_id}` - Get user's bookings
+- `POST /api/cancel/{booking_id}` - Cancel a booking
+
+### API Response Handling
+
+The frontend uses **Union types** for error handling:
+
+```typescript
+// Check for errors without try/catch
+const response = await api.bookFlight(userId, name, flightId, seatClass);
+if (response.success === false) {
+  // Handle error
+  toast.error(response.message);
+} else {
+  // Handle success
+  toast.success('Booking confirmed!');
+}
+```
+
+### Seat Class Type Safety
+
+Seat classes are enforced via TypeScript Literal types:
+
+```typescript
+type SeatClass = 'economy' | 'business' | 'galaxium';
+```
+
+This ensures compile-time validation and prevents invalid seat class values.
 
 ## 🎯 User Flows
 
 ### Booking a Flight
 
 1. Browse available flights on the Flights page
-2. Click "Book Now" on desired flight
-3. Sign in or register (if not already logged in)
-4. Confirm booking details
-5. Receive confirmation and view in My Bookings
+2. View seat class options with availability and pricing
+3. Select desired seat class (Economy, Business, or Galaxium)
+4. Click "Book Now" on desired flight and class
+5. Sign in or register (if not already logged in)
+6. Confirm booking details with final price
+7. Receive confirmation and view in My Bookings
 
 ### Managing Bookings
 
 1. Navigate to My Bookings (requires login)
-2. View active and past bookings
-3. Cancel active bookings if needed
+2. View active bookings with seat class information
+3. Cancel active bookings if needed (restores seat availability)
 4. See real-time status updates
+
+### Seat Class Selection
+
+- Each flight card displays three seat class options
+- Real-time availability shown for each class
+- Sold out classes are clearly marked but other classes remain bookable
+- Prices calculated dynamically based on base price and class multiplier
 
 ## 🎨 Customization
 
@@ -184,18 +222,43 @@ VITE_API_URL=https://your-api-url.com
 
 ### Available Scripts
 
-- `npm run dev` - Start development server
+- `npm run dev` - Start development server (port 5173)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 
 ### Code Style
 
-- Use TypeScript for type safety
-- Follow React best practices
-- Use functional components with hooks
-- Keep components small and focused
-- Use Tailwind utility classes
+- **TypeScript Strict Mode**: Enabled for maximum type safety
+- **React 19**: Uses new JSX transform (no React imports needed)
+- **Functional Components**: All components use hooks
+- **Component Organization**: Small, focused, single-responsibility components
+- **Tailwind Utilities**: Prefer utility classes over custom CSS
+- **Type Safety**: All API responses typed as Union types
+
+### State Management
+
+- **No Global State Library**: Uses React Context for user state only
+- **useUser Hook**: Provides user authentication state
+- **Local Component State**: For UI-specific state
+- **API State**: Managed via async/await with Union type responses
+
+### Critical Frontend Patterns
+
+For detailed non-obvious patterns and architectural constraints, see **[../AGENTS.md](../AGENTS.md)**, which documents:
+- API error handling via Union types (no try/catch)
+- Seat class type safety with Literal types
+- State management patterns
+- Type system conventions
+
+### Contributing & Demo Tasks
+
+See **[../DEMO_BACKLOG.md](../DEMO_BACKLOG.md)** for 41 organized frontend tasks ranging from:
+- **Tiny Tasks** (1-5 lines) - Perfect for quick contributions
+- **Quick Fixes** (5-10 min) - Loading states, validation, UI improvements
+- **Medium Features** (30-60 min) - Sorting, filtering, export functionality
+- **Large Features** (2+ hours) - Authentication, testing, real-time updates
+- **Accessibility** - ARIA labels, keyboard navigation, screen reader support
 
 ## 🚀 Deployment
 
