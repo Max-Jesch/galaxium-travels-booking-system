@@ -1,10 +1,29 @@
+import re
+
 from sqlalchemy.orm import Session
 from models import User
 from schemas import UserOut, ErrorResponse
 
 
+
+def _is_valid_email(email: str) -> bool:
+    """Validate email format using regex pattern."""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+
+
 def register_user(db: Session, name: str, email: str) -> UserOut | ErrorResponse:
     """Register a new user with a name and unique email."""
+
+    if not _is_valid_email(email):
+        return ErrorResponse(
+            error="Invalid email format",
+            error_code="INVALID_EMAIL",
+            details=f"Email '{email}' is not in a valid format. Please provide a valid email address (e.g., user@example.com)."
+        )
+    
+
     existing = db.query(User).filter(User.email == email).first()
     if existing:
         return ErrorResponse(
